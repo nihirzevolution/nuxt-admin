@@ -1,12 +1,11 @@
-import { randomUUID } from 'node:crypto'
+import { loginUser } from '../../controllers/auth.controller'
 import { jsonError, jsonSuccess } from '../../utils/apiResponse'
 
 type LoginBody = { email?: string; password?: string }
 
 /**
  * POST /api/auth/login
- * Postman: POST http://localhost:3000/api/auth/login
- * Body (raw JSON): { "email": "a@b.c", "password": "secret" }
+ * Body: { "email", "password" }
  */
 export default defineEventHandler(async (event) => {
   const body = await readBody<LoginBody>(event).catch(() => ({}))
@@ -23,12 +22,23 @@ export default defineEventHandler(async (event) => {
     )
   }
 
-  // Stub: replace with real auth (database, sessions, JWT, etc.)
-  return jsonSuccess(event, {
-    token: `stub-jwt-${randomUUID()}`,
-    user: {
-      id: '00000000-0000-0000-0000-000000000000',
-      email
+  try {
+    const data = await loginUser({ email, password })
+    return jsonSuccess(event, data)
+  } catch (e: unknown) {
+    const err = e as { message?: string; statusCode?: number }
+    const status = err.statusCode ?? 500
+    if (status === 401) {
+      return jsonError(
+        event,
+        'UNAUTHORIZED',
+        err.message ?? 'Invalid email or password',
+        401
+      )
     }
-  })
+    if (e instanceof Error && e.message.includes('not configured')) {
+      return jsonError(event, 'CONFIG', e.message, 500)
+    }
+    throw e
+  }
 })

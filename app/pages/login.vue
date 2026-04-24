@@ -92,7 +92,8 @@ async function onSubmit() {
       password: form.password
     })
     if (res.ok) {
-      formSuccess.value = `Signed in (stub). Token: ${res.data.token.slice(0, 20)}…`
+      const { user, token } = res.data
+      formSuccess.value = `Signed in as ${user.name} (${user.role}). Token: ${token.slice(0, 24)}…`
     }
   } catch (e: unknown) {
     const data = (e as { data?: { ok?: boolean; error?: { message: string } } })

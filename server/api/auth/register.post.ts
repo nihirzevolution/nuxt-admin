@@ -1,11 +1,11 @@
+import { registerUser } from '../../controllers/auth.controller'
 import { jsonError, jsonSuccess } from '../../utils/apiResponse'
 
 type RegisterBody = { name?: string; email?: string; password?: string }
 
 /**
  * POST /api/auth/register
- * Postman: POST http://localhost:3000/api/auth/register
- * Body: { "name": "Jane", "email": "a@b.c", "password": "secret123" }
+ * Body: { "name", "email", "password" } — creates a standard user (role: user)
  */
 export default defineEventHandler(async (event) => {
   const body = await readBody<RegisterBody>(event).catch(() => ({}))
@@ -32,14 +32,22 @@ export default defineEventHandler(async (event) => {
     )
   }
 
-  // Stub: replace with persistence and duplicate-email checks
-  return jsonSuccess(
-    event,
-    {
-      id: '00000000-0000-0000-0000-000000000001',
-      name,
-      email
-    },
-    201
-  )
+  try {
+    const data = await registerUser({ name, email, password })
+    return jsonSuccess(event, data, 201)
+  } catch (e: unknown) {
+    const err = e as { message?: string; statusCode?: number }
+    if (err.statusCode === 409) {
+      return jsonError(
+        event,
+        'EMAIL_IN_USE',
+        err.message ?? 'Email already registered',
+        409
+      )
+    }
+    if (e instanceof Error && e.message.includes('not configured')) {
+      return jsonError(event, 'CONFIG', e.message, 500)
+    }
+    throw e
+  }
 })

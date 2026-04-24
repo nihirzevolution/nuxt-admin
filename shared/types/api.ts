@@ -13,7 +13,7 @@ export type HealthData = {
 
 export type LoginData = {
   token: string
-  user: { id: string; email: string }
+  user: { id: string; email: string; name: string; role: string }
 }
 
 export type RegisterData = {
