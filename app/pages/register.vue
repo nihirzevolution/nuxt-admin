@@ -74,11 +74,24 @@
     >
       Passwords do not match.
     </p>
+    <p
+      v-if="formError"
+      class="text-sm text-red-400"
+    >
+      {{ formError }}
+    </p>
+    <p
+      v-if="formSuccess"
+      class="text-sm text-emerald-400/90"
+    >
+      {{ formSuccess }}
+    </p>
     <button
       type="submit"
-      class="w-full rounded-lg bg-indigo-500 py-2.5 text-sm font-medium text-white shadow shadow-indigo-500/30 transition hover:bg-indigo-400"
+      :disabled="pending"
+      class="w-full rounded-lg bg-indigo-500 py-2.5 text-sm font-medium text-white shadow shadow-indigo-500/30 transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      Create account
+      {{ pending ? 'Creating account…' : 'Create account' }}
     </button>
     <p class="text-center text-sm text-slate-400">
       Already have an account?
@@ -93,12 +106,16 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 
+const api = useApi()
 const form = reactive({
   name: '',
   email: '',
   password: '',
   passwordConfirm: ''
 })
+const pending = ref(false)
+const formError = ref('')
+const formSuccess = ref('')
 
 const passwordMismatch = computed(
   () =>
@@ -107,14 +124,32 @@ const passwordMismatch = computed(
     && form.password !== form.passwordConfirm
 )
 
-function onSubmit() {
+async function onSubmit() {
+  formError.value = ''
+  formSuccess.value = ''
   if (passwordMismatch.value) {
     return
   }
-  // Frontend only: wire up API when backend is ready
-  console.info('register submit (stub)', {
-    name: form.name,
-    email: form.email
-  })
+  pending.value = true
+  try {
+    const res = await api.register({
+      name: form.name,
+      email: form.email,
+      password: form.password
+    })
+    if (res.ok) {
+      formSuccess.value = `Account created (stub). ID: ${res.data.id}`
+    }
+  } catch (e: unknown) {
+    const data = (e as { data?: { ok?: boolean; error?: { message: string } } })
+      .data
+    if (data && 'ok' in data && data.ok === false && data.error) {
+      formError.value = data.error.message
+    } else {
+      formError.value = 'Something went wrong. Try again.'
+    }
+  } finally {
+    pending.value = false
+  }
 }
 </script>

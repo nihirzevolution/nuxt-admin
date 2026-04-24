@@ -41,11 +41,24 @@
         placeholder="••••••••"
       >
     </div>
+    <p
+      v-if="formError"
+      class="text-sm text-red-400"
+    >
+      {{ formError }}
+    </p>
+    <p
+      v-if="formSuccess"
+      class="text-sm text-emerald-400/90"
+    >
+      {{ formSuccess }}
+    </p>
     <button
       type="submit"
-      class="w-full rounded-lg bg-indigo-500 py-2.5 text-sm font-medium text-white shadow shadow-indigo-500/30 transition hover:bg-indigo-400"
+      :disabled="pending"
+      class="w-full rounded-lg bg-indigo-500 py-2.5 text-sm font-medium text-white shadow shadow-indigo-500/30 transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      Sign in
+      {{ pending ? 'Signing in…' : 'Sign in' }}
     </button>
     <p class="text-center text-sm text-slate-400">
       Don’t have an account?
@@ -60,13 +73,37 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 
+const api = useApi()
 const form = reactive({
   email: '',
   password: ''
 })
+const pending = ref(false)
+const formError = ref('')
+const formSuccess = ref('')
 
-function onSubmit() {
-  // Frontend only: wire up API when backend is ready
-  console.info('login submit (stub)', { email: form.email })
+async function onSubmit() {
+  formError.value = ''
+  formSuccess.value = ''
+  pending.value = true
+  try {
+    const res = await api.login({
+      email: form.email,
+      password: form.password
+    })
+    if (res.ok) {
+      formSuccess.value = `Signed in (stub). Token: ${res.data.token.slice(0, 20)}…`
+    }
+  } catch (e: unknown) {
+    const data = (e as { data?: { ok?: boolean; error?: { message: string } } })
+      .data
+    if (data && 'ok' in data && data.ok === false && data.error) {
+      formError.value = data.error.message
+    } else {
+      formError.value = 'Something went wrong. Try again.'
+    }
+  } finally {
+    pending.value = false
+  }
 }
 </script>
