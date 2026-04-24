@@ -35,10 +35,19 @@ export async function registerUser(input: {
       role: 'user' as UserRole,
       isActive: true
     })
+    const token = await signAccessToken({
+      sub: String(user._id),
+      email: user.email,
+      role: user.role
+    })
     return {
-      id: String(user._id),
-      name: user.name,
-      email: user.email
+      token,
+      user: {
+        id: String(user._id),
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     }
   } catch (e) {
     if (isDuplicateKeyError(e)) {

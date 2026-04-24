@@ -47,12 +47,6 @@
     >
       {{ formError }}
     </p>
-    <p
-      v-if="formSuccess"
-      class="text-sm text-emerald-400/90"
-    >
-      {{ formSuccess }}
-    </p>
     <button
       type="submit"
       :disabled="pending"
@@ -71,20 +65,28 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'auth' })
+definePageMeta({ layout: 'auth', middleware: 'guest' })
 
 const api = useApi()
+const { setSession } = useAuth()
+const route = useRoute()
 const form = reactive({
   email: '',
   password: ''
 })
 const pending = ref(false)
 const formError = ref('')
-const formSuccess = ref('')
+
+function redirectTarget() {
+  const r = route.query.redirect
+  if (typeof r === 'string' && r.startsWith('/') && !r.startsWith('//')) {
+    return r
+  }
+  return '/dashboard'
+}
 
 async function onSubmit() {
   formError.value = ''
-  formSuccess.value = ''
   pending.value = true
   try {
     const res = await api.login({
@@ -92,8 +94,8 @@ async function onSubmit() {
       password: form.password
     })
     if (res.ok) {
-      const { user, token } = res.data
-      formSuccess.value = `Signed in as ${user.name} (${user.role}). Token: ${token.slice(0, 24)}…`
+      setSession(res.data.token, res.data.user)
+      await navigateTo(redirectTarget())
     }
   } catch (e: unknown) {
     const data = (e as { data?: { ok?: boolean; error?: { message: string } } })

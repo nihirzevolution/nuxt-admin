@@ -16,8 +16,11 @@ export type LoginData = {
   user: { id: string; email: string; name: string; role: string }
 }
 
+export type MeData = {
+  user: { id: string; email: string; name: string; role: string }
+}
+
 export type RegisterData = {
-  id: string
-  name: string
-  email: string
+  token: string
+  user: { id: string; name: string; email: string; role: string }
 }

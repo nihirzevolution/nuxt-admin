@@ -13,6 +13,13 @@
       </p>
       <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
         <NuxtLink
+          v-if="token"
+          to="/dashboard"
+          class="inline-flex items-center justify-center rounded-lg border border-indigo-500/50 bg-indigo-500/20 px-5 py-2.5 text-sm font-medium text-indigo-200 transition hover:border-indigo-400 hover:bg-indigo-500/30"
+        >
+          Dashboard
+        </NuxtLink>
+        <NuxtLink
           to="/login"
           class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-5 py-2.5 text-sm font-medium text-white shadow shadow-indigo-500/30 transition hover:bg-indigo-400"
         >
@@ -28,3 +35,7 @@
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+const { token } = useAuth()
+</script>

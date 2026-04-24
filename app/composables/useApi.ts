@@ -2,6 +2,7 @@ import type {
   ApiResult,
   HealthData,
   LoginData,
+  MeData,
   RegisterData
 } from '#shared/types/api'
 
@@ -14,6 +15,7 @@ type RegisterPayload = { name: string; email: string; password: string }
 export function useApi() {
   return {
     health: () => $fetch<ApiResult<HealthData>>('/api/v1/health'),
+    me: () => $fetch<ApiResult<MeData>>('/api/auth/me'),
     login: (body: LoginPayload) =>
       $fetch<ApiResult<LoginData>>('/api/auth/login', { method: 'POST', body }),
     register: (body: RegisterPayload) =>

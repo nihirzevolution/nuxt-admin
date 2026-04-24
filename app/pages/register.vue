@@ -80,12 +80,6 @@
     >
       {{ formError }}
     </p>
-    <p
-      v-if="formSuccess"
-      class="text-sm text-emerald-400/90"
-    >
-      {{ formSuccess }}
-    </p>
     <button
       type="submit"
       :disabled="pending"
@@ -104,9 +98,10 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'auth' })
+definePageMeta({ layout: 'auth', middleware: 'guest' })
 
 const api = useApi()
+const { setSession } = useAuth()
 const form = reactive({
   name: '',
   email: '',
@@ -115,7 +110,6 @@ const form = reactive({
 })
 const pending = ref(false)
 const formError = ref('')
-const formSuccess = ref('')
 
 const passwordMismatch = computed(
   () =>
@@ -126,7 +120,6 @@ const passwordMismatch = computed(
 
 async function onSubmit() {
   formError.value = ''
-  formSuccess.value = ''
   if (passwordMismatch.value) {
     return
   }
@@ -138,7 +131,8 @@ async function onSubmit() {
       password: form.password
     })
     if (res.ok) {
-      formSuccess.value = `Account created (stub). ID: ${res.data.id}`
+      setSession(res.data.token, res.data.user)
+      await navigateTo('/dashboard')
     }
   } catch (e: unknown) {
     const data = (e as { data?: { ok?: boolean; error?: { message: string } } })
