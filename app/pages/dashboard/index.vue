@@ -14,20 +14,27 @@
       >.
     </p>
     <p
-      v-if="isAdmin"
+      v-if="isStaff"
       class="mt-4 text-slate-500"
-    >Use the sidebar to open <strong
+    >Use the sidebar: <strong
       class="font-medium text-slate-400"
-    >Roles</strong> and <strong
-      class="font-medium text-slate-400"
-    >Users</strong> — each module is backed by its own REST API under
+    >Users</strong> is for <code
+      class="text-indigo-400/90"
+    >admin</code> and
       <code
         class="text-indigo-400/90"
-      >/api/roles</code> and
+      >super_admin</code>.
+      <strong
+        class="font-medium text-slate-400"
+      >Roles</strong> (API
       <code
         class="text-indigo-400/90"
-      >/api/users</code>
-      for Postman and integration tests.
+      >/api/roles</code>) is <strong
+        class="text-amber-500/90"
+      >super_admin</strong> only. Users API:
+      <code
+        class="text-indigo-400/90"
+      >/api/users</code>.
     </p>
   </div>
 </template>
@@ -35,8 +42,8 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'dashboard',
-  middleware: 'auth'
+  middleware: ['auth', 'staff']
 })
 
-const { user, isAdmin } = useAuth()
+const { user, isStaff } = useAuth()
 </script>

@@ -29,10 +29,23 @@ export function useAuth() {
     user.value = null
   }
 
-  const isAdmin = computed(() => {
+  const isStaff = computed(() => {
     const r = user.value?.role
     return r === 'admin' || r === 'super_admin'
   })
 
-  return { token, user, isAdmin, setSession, clearSession }
+  const isSuperAdmin = computed(() => user.value?.role === 'super_admin')
+
+  /** @deprecated use isStaff — same (admin or super_admin) */
+  const isAdmin = isStaff
+
+  return {
+    token,
+    user,
+    isStaff,
+    isSuperAdmin,
+    isAdmin,
+    setSession,
+    clearSession
+  }
 }

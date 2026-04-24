@@ -21,7 +21,8 @@ function getTokenFromEvent(event: Parameters<typeof getCookie>[0]) {
   return fromCookie || bearer
 }
 
-const ADMIN_ROLES = new Set(['admin', 'super_admin'])
+const STAFF_ROLES = new Set(['admin', 'super_admin'])
+const SUPER_ADMIN = 'super_admin'
 
 /**
  * Resolves the current user for protected APIs (401 if missing/invalid user).
@@ -50,24 +51,56 @@ export async function getAuthUserFromEvent(
     e.statusCode = 401
     throw e
   }
-  return { user, token, payload } as { user: IUserDocument; token: string; payload: { sub: string; email: string; role: string } }
+  return { user, token, payload } as {
+    user: IUserDocument
+    token: string
+    payload: { sub: string; email: string; role: string }
+  }
 }
 
-export async function requireAuth(event: Parameters<typeof getCookie>[0]) {
+export async function requireAuth(
+  event: Parameters<typeof getCookie>[0]
+) {
   return getAuthUserFromEvent(event)
 }
 
 /**
- * For role / user management APIs: must be `admin` or `super_admin`.
+ * `admin` or `super_admin` (dashboard, Users module).
  */
-export async function requireAdmin(
+export async function requireStaff(
   event: Parameters<typeof getCookie>[0]
 ) {
   const { user, token, payload } = await getAuthUserFromEvent(event)
-  if (!ADMIN_ROLES.has(String(user.role))) {
+  if (!STAFF_ROLES.has(String(user.role))) {
     const e = new Error('Forbidden') as { statusCode?: number }
     e.statusCode = 403
     throw e
   }
   return { user, token, payload }
+}
+
+/** @deprecated use requireStaff — same behaviour */
+export const requireAdmin = requireStaff
+
+/**
+ * Roles module + super-admin-only user visibility rules are enforced in controllers; this is for Routes API.
+ */
+export async function requireSuperAdmin(
+  event: Parameters<typeof getCookie>[0]
+) {
+  const { user, token, payload } = await getAuthUserFromEvent(event)
+  if (String(user.role) !== SUPER_ADMIN) {
+    const e = new Error('Forbidden: super admin only') as { statusCode?: number }
+    e.statusCode = 403
+    throw e
+  }
+  return { user, token, payload }
+}
+
+export function isStaffRole(role: string) {
+  return STAFF_ROLES.has(role)
+}
+
+export function isSuperAdminRole(role: string) {
+  return role === SUPER_ADMIN
 }

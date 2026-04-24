@@ -14,8 +14,12 @@ export default defineNuxtRouteMiddleware(async () => {
     const res = await requestFetch<ApiResult<MeData>>('/api/auth/me', {
       credentials: 'include'
     })
-    if (res?.ok) {
-      return navigateTo('/dashboard')
+    if (res?.ok && res.data.user) {
+      const r = res.data.user.role
+      if (r === 'admin' || r === 'super_admin') {
+        return navigateTo('/dashboard')
+      }
+      return navigateTo('/')
     }
   } catch {
     // stale / invalid token while on guest page

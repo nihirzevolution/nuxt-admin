@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "seed:admin": "tsx scripts/seed-admin.ts",
-    "seed:roles": "tsx scripts/seed-roles.ts"
+    "seed:roles": "tsx scripts/seed-roles.ts",
+    "seed:users": "tsx scripts/seed-users.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

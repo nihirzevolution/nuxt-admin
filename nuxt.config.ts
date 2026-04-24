@@ -10,6 +10,9 @@ export default defineNuxtConfig({
   // See: https://nuxt.com/docs/guide/going-further/runtime-config#environment-variables
   runtimeConfig: {
     mongodbUri: process.env.MONGODB_URI,
-    jwtSecret: process.env.JWT_SECRET
+    jwtSecret: process.env.JWT_SECRET,
+    public: {
+      appDownloadUrl: process.env.NUXT_PUBLIC_APP_DOWNLOAD_URL || '#'
+    }
   }
 })

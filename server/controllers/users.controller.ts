@@ -32,7 +32,7 @@ async function assertValidRoleSlug(slug: string) {
   if (r) {
     return
   }
-  if (['user', 'admin', 'super_admin'].includes(s)) {
+  if (['user', 'admin', 'super_admin', 'shop_owner'].includes(s)) {
     return
   }
   throw err('Invalid role. Create the role in Roles first or use an active slug.', 400)
@@ -52,22 +52,31 @@ export function mapUser(
   }
 }
 
-export async function listUsers(query: {
-  page?: string
-  limit?: string
-  search?: string
-}) {
+export async function listUsers(
+  query: { page?: string; limit?: string; search?: string },
+  options: { viewerRole: string }
+) {
   await ensureDb()
   const page = Math.max(1, Number(query.page) || 1)
   const limit = Math.min(100, Math.max(1, Number(query.limit) || 10))
   const skip = (page - 1) * limit
   const q = query.search?.trim()
+  const hideSuperAdmins = options.viewerRole !== 'super_admin'
   const filter: Record<string, unknown> = {}
   if (q) {
-    filter.$or = [
-      { name: { $regex: q, $options: 'i' } },
-      { email: { $regex: q, $options: 'i' } }
-    ]
+    const searchPart = {
+      $or: [
+        { name: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } }
+      ]
+    }
+    if (hideSuperAdmins) {
+      filter.$and = [searchPart, { role: { $ne: 'super_admin' } }]
+    } else {
+      Object.assign(filter, searchPart)
+    }
+  } else if (hideSuperAdmins) {
+    filter.role = { $ne: 'super_admin' }
   }
   const [raw, total] = await Promise.all([
     User.find(filter)
@@ -87,7 +96,10 @@ export async function listUsers(query: {
   }
 }
 
-export async function getUserById(id: string) {
+export async function getUserById(
+  id: string,
+  options: { viewerRole: string }
+) {
   await ensureDb()
   const u = await User.findById(id)
     .select('email name role isActive createdAt updatedAt')
@@ -95,17 +107,26 @@ export async function getUserById(id: string) {
   if (!u) {
     throw err('User not found', 404)
   }
+  if (u.role === 'super_admin' && options.viewerRole !== 'super_admin') {
+    throw err('User not found', 404)
+  }
   return mapUser(u as Parameters<typeof mapUser>[0])
 }
 
-export async function createUser(input: {
-  name: string
-  email: string
-  password: string
-  role: string
-  isActive?: boolean
-}) {
+export async function createUser(
+  input: {
+    name: string
+    email: string
+    password: string
+    role: string
+    isActive?: boolean
+  },
+  options: { viewerRole: string }
+) {
   await ensureDb()
+  if (input.role && input.role.toLowerCase() === 'super_admin' && options.viewerRole !== 'super_admin') {
+    throw err('Only a super admin can create super admin users', 403)
+  }
   const name = input.name?.trim() ?? ''
   const email = (input.email ?? '').toLowerCase().trim()
   const password = input.password ?? ''
@@ -147,12 +168,19 @@ export async function updateUser(
     role?: string
     isActive?: boolean
     password?: string
-  }
+  },
+  options: { viewerRole: string }
 ) {
   await ensureDb()
   const u = await User.findById(id).select('+passwordHash')
   if (!u) {
     throw err('User not found', 404)
+  }
+  if (u.role === 'super_admin' && options.viewerRole !== 'super_admin') {
+    throw err('Only a super admin can modify super admin users', 403)
+  }
+  if (input.role && input.role.toLowerCase() === 'super_admin' && options.viewerRole !== 'super_admin') {
+    throw err('Only a super admin can assign the super admin role', 403)
   }
   if (input.name != null) {
     u.name = String(input.name).trim()
@@ -199,7 +227,11 @@ export async function updateUser(
   return mapUser(fresh as Parameters<typeof mapUser>[0])
 }
 
-export async function deleteUser(id: string, currentUserId: string) {
+export async function deleteUser(
+  id: string,
+  currentUserId: string,
+  options: { viewerRole: string }
+) {
   await ensureDb()
   if (id === currentUserId) {
     throw err('You cannot delete your own account', 400)
@@ -207,6 +239,9 @@ export async function deleteUser(id: string, currentUserId: string) {
   const u = await User.findById(id)
   if (!u) {
     throw err('User not found', 404)
+  }
+  if (u.role === 'super_admin' && options.viewerRole !== 'super_admin') {
+    throw err('Only a super admin can delete a super admin user', 403)
   }
   if (u.role === 'super_admin') {
     const count = await User.countDocuments({ role: 'super_admin' })

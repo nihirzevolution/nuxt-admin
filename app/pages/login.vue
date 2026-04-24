@@ -77,7 +77,11 @@ const form = reactive({
 const pending = ref(false)
 const formError = ref('')
 
-function redirectTarget() {
+function afterLoginPath(role: string) {
+  const isStaff = role === 'admin' || role === 'super_admin'
+  if (!isStaff) {
+    return '/'
+  }
   const r = route.query.redirect
   if (typeof r === 'string' && r.startsWith('/') && !r.startsWith('//')) {
     return r
@@ -95,7 +99,7 @@ async function onSubmit() {
     })
     if (res.ok) {
       setSession(res.data.token, res.data.user)
-      await navigateTo(redirectTarget())
+      await navigateTo(afterLoginPath(res.data.user.role))
     }
   } catch (e: unknown) {
     const data = (e as { data?: { ok?: boolean; error?: { message: string } } })

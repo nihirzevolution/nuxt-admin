@@ -1,9 +1,10 @@
 import { Role } from '../server/models/role.model'
 
 const SYSTEM = [
-  { name: 'User', slug: 'user', description: 'Default application user' },
-  { name: 'Admin', slug: 'admin', description: 'Administrator' },
-  { name: 'Super Admin', slug: 'super_admin', description: 'Full access' }
+  { name: 'Super Admin', slug: 'super_admin', description: 'Full system access' },
+  { name: 'Admin', slug: 'admin', description: 'Manage users (not roles)' },
+  { name: 'Shop owner', slug: 'shop_owner', description: 'Shop / tenant owner' },
+  { name: 'User', slug: 'user', description: 'Default application user' }
 ]
 
 /**

@@ -1,7 +1,7 @@
 import { createRole } from '../../controllers/roles.controller'
 import { jsonSuccess } from '../../utils/apiResponse'
 import { handleControllerError } from '../../utils/httpError'
-import { requireAdmin } from '../../utils/guard'
+import { requireSuperAdmin } from '../../utils/guard'
 
 /**
  * POST /api/roles
@@ -9,7 +9,7 @@ import { requireAdmin } from '../../utils/guard'
  */
 export default defineEventHandler(async (event) => {
   try {
-    await requireAdmin(event)
+    await requireSuperAdmin(event)
     const body = await readBody<{
       name?: string
       slug?: string

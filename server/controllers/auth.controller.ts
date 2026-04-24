@@ -35,6 +35,8 @@ export async function registerUser(input: {
       role: 'user',
       isActive: true
     })
+    const config = useRuntimeConfig()
+    const downloadUrl = String(config.public.appDownloadUrl || '#')
     const token = await signAccessToken({
       sub: String(user._id),
       email: user.email,
@@ -47,7 +49,10 @@ export async function registerUser(input: {
         name: user.name,
         email: user.email,
         role: user.role
-      }
+      },
+      message:
+        'Thank you for your registration! You can now use the application.',
+      downloadUrl
     }
   } catch (e) {
     if (isDuplicateKeyError(e)) {

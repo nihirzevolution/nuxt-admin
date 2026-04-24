@@ -1,14 +1,14 @@
 import { getRoleById } from '../../controllers/roles.controller'
 import { jsonSuccess } from '../../utils/apiResponse'
 import { handleControllerError } from '../../utils/httpError'
-import { requireAdmin } from '../../utils/guard'
+import { requireSuperAdmin } from '../../utils/guard'
 
 /**
  * GET /api/roles/:id
  */
 export default defineEventHandler(async (event) => {
   try {
-    await requireAdmin(event)
+    await requireSuperAdmin(event)
     const id = getRouterParam(event, 'id')
     if (!id) {
       const e = new Error('id required') as { statusCode?: number }

@@ -1,5 +1,5 @@
 /**
- * Only `admin` and `super_admin` may open management screens (assumes `auth` runs first on the same route).
+ * Back office: only `admin` and `super_admin` (not `user` or `shop_owner`).
  */
 export default defineNuxtRouteMiddleware(() => {
   const { user } = useAuth()
@@ -9,5 +9,5 @@ export default defineNuxtRouteMiddleware(() => {
   if (user.value.role === 'admin' || user.value.role === 'super_admin') {
     return
   }
-  return navigateTo('/dashboard')
+  return navigateTo('/')
 })

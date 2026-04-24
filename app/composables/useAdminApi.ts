@@ -32,9 +32,15 @@ const fetchOpts = { credentials: 'include' as const }
 
 /**
  * Admin-only JSON APIs (cookie or Bearer; admin / super_admin).
+ * Roles CRUD: super_admin only. `roleSlugs` is for user forms (admin + super_admin).
  */
 export function useAdminApi() {
   return {
+    roleSlugs: () =>
+      $fetch<ApiResult<{ items: { slug: string; name: string }[] }>>(
+        '/api/role-slugs',
+        fetchOpts
+      ),
     roles: {
       list: (q?: { page?: number; limit?: number; active?: boolean | number }) =>
         $fetch<ApiResult<Paginated<RoleItem>>>('/api/roles', {

@@ -23,4 +23,6 @@ export type MeData = {
 export type RegisterData = {
   token: string
   user: { id: string; name: string; email: string; role: string }
+  message: string
+  downloadUrl: string
 }

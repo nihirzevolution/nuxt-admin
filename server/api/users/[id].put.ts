@@ -1,14 +1,14 @@
 import { updateUser } from '../../controllers/users.controller'
 import { jsonSuccess } from '../../utils/apiResponse'
 import { handleControllerError } from '../../utils/httpError'
-import { requireAdmin } from '../../utils/guard'
+import { requireStaff } from '../../utils/guard'
 
 /**
  * PUT /api/users/:id
  */
 export default defineEventHandler(async (event) => {
   try {
-    const { user } = await requireAdmin(event)
+    const { user } = await requireStaff(event)
     const id = getRouterParam(event, 'id')
     if (!id) {
       const e = new Error('id required') as { statusCode?: number }
@@ -22,7 +22,9 @@ export default defineEventHandler(async (event) => {
       isActive?: boolean
       password?: string
     }>(event)
-    const data = await updateUser(id, String(user._id), body)
+    const data = await updateUser(id, String(user._id), body, {
+      viewerRole: String(user.role)
+    })
     return jsonSuccess(event, data)
   } catch (e) {
     return handleControllerError(event, e)

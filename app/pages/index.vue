@@ -13,11 +13,11 @@
       </p>
       <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
         <NuxtLink
-          v-if="token"
+          v-if="isStaff"
           to="/dashboard"
           class="inline-flex items-center justify-center rounded-lg border border-indigo-500/50 bg-indigo-500/20 px-5 py-2.5 text-sm font-medium text-indigo-200 transition hover:border-indigo-400 hover:bg-indigo-500/30"
         >
-          Dashboard
+          Back office
         </NuxtLink>
         <NuxtLink
           to="/login"
@@ -37,5 +37,5 @@
 </template>
 
 <script setup lang="ts">
-const { token } = useAuth()
+const { isStaff } = useAuth()
 </script>
