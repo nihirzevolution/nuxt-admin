@@ -1,12 +1,13 @@
 import mongoose, { type Document, type Model } from 'mongoose'
 
-export type UserRole = 'user' | 'admin' | 'super_admin'
+/** System-style slugs; new roles are managed via the Roles module (same `slug` stored on user). */
+export type UserRole = string
 
 export interface IUser {
   email: string
   passwordHash: string
   name: string
-  role: UserRole
+  role: string
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -31,8 +32,9 @@ const userSchema = new mongoose.Schema<IUserDocument>(
     name: { type: String, required: true, trim: true },
     role: {
       type: String,
-      enum: ['user', 'admin', 'super_admin'] satisfies UserRole[],
-      default: 'user'
+      required: true,
+      default: 'user',
+      index: true
     },
     isActive: { type: Boolean, default: true }
   },

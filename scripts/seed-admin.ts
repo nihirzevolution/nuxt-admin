@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { connectDatabase, disconnectDatabase } from '../server/lib/database'
 import { User } from '../server/models'
 import { hashPassword } from '../server/utils/password'
+import { ensureSystemRoles } from './ensure-system-roles'
 
 /**
  * Idempotent: creates a super_admin if no user exists with SEED_ADMIN_EMAIL.
@@ -25,6 +26,7 @@ async function run() {
   }
 
   await connectDatabase(uri)
+  await ensureSystemRoles()
 
   const existing = await User.findOne({ email })
   if (existing) {

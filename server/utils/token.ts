@@ -1,10 +1,9 @@
 import { SignJWT, type JWTPayload, jwtVerify } from 'jose'
-import type { UserRole } from '../models'
 
 type TokenPayload = {
   sub: string
   email: string
-  role: UserRole
+  role: string
 }
 
 const encoder = new TextEncoder()
@@ -39,5 +38,5 @@ export async function signAccessToken(data: TokenPayload) {
 export async function verifyAccessToken(token: string) {
   const secret = getSecret()
   const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] })
-  return payload as JWTPayload & { email: string; role: UserRole }
+  return payload as JWTPayload & { email: string; role: string }
 }

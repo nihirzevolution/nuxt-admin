@@ -1,5 +1,5 @@
 import { connectDatabase } from '../lib/database'
-import { User, type UserRole } from '../models'
+import { User } from '../models'
 import { hashPassword, verifyPassword } from '../utils/password'
 import { signAccessToken } from '../utils/token'
 
@@ -32,7 +32,7 @@ export async function registerUser(input: {
       name: input.name,
       email: input.email.toLowerCase(),
       passwordHash,
-      role: 'user' as UserRole,
+      role: 'user',
       isActive: true
     })
     const token = await signAccessToken({
