@@ -121,3 +121,37 @@ export async function requireShopModule(
   }
   return { user, token, payload }
 }
+
+const PURCHASE_MODULE_ROLES = new Set(['admin', 'super_admin', 'shop_owner', 'user'])
+
+/**
+ * Purchases / khata-style lines: staff, shop owner, or end user (app).
+ */
+export async function requirePurchaseModule(
+  event: Parameters<typeof getCookie>[0]
+) {
+  const { user, token, payload } = await getAuthUserFromEvent(event)
+  if (!PURCHASE_MODULE_ROLES.has(String(user.role))) {
+    const e = new Error('Forbidden') as { statusCode?: number }
+    e.statusCode = 403
+    throw e
+  }
+  return { user, token, payload }
+}
+
+const SHOP_LINK_ROLES = new Set(['admin', 'super_admin', 'shop_owner', 'user'])
+
+/**
+ * Shop ↔ user membership (invites, accept/decline, revoke). Same roles as purchases for app + staff.
+ */
+export async function requireShopLinkModule(
+  event: Parameters<typeof getCookie>[0]
+) {
+  const { user, token, payload } = await getAuthUserFromEvent(event)
+  if (!SHOP_LINK_ROLES.has(String(user.role))) {
+    const e = new Error('Forbidden') as { statusCode?: number }
+    e.statusCode = 403
+    throw e
+  }
+  return { user, token, payload }
+}

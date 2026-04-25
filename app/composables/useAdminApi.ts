@@ -73,6 +73,45 @@ export type ProductItem = {
   updatedAt: string
 }
 
+export type PurchaseItem = {
+  id: string
+  shopId: string
+  userId: string
+  productId: string
+  quantity: number
+  priceAtPurchase: number
+  totalAmount: number
+  purchaseDate: string
+  notes: string
+  shopName?: string
+  productName?: string
+  userName?: string
+  userEmail?: string
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
+
+export type ShopUserLinkItem = {
+  id: string
+  userId: string
+  shopId: string
+  status: 'pending' | 'active' | 'declined' | 'revoked'
+  invitedByUserId: string
+  shopName?: string
+  userName?: string
+  userEmail?: string
+  inviterName?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type ShopUserInviteResult = {
+  shopId: string
+  invitedByUserId: string
+  results: Array<{ userId: string; ok: boolean; id?: string; error?: string }>
+}
+
 const fetchOpts = { credentials: 'include' as const }
 
 /**
@@ -308,6 +347,106 @@ export function useAdminApi() {
       remove: (id: string) =>
         $fetch<ApiResult<{ deleted: boolean; id: string }>>(
           `/api/products/${id}`,
+          { method: 'DELETE', ...fetchOpts }
+        )
+    },
+    purchases: {
+      list: (q?: {
+        page?: number
+        limit?: number
+        search?: string
+        shopId?: string
+        userId?: string
+        productId?: string
+      }) =>
+        $fetch<ApiResult<Paginated<PurchaseItem>>>('/api/purchases', {
+          ...fetchOpts,
+          query: {
+            page: q?.page,
+            limit: q?.limit,
+            search: q?.search,
+            shopId: q?.shopId,
+            userId: q?.userId,
+            productId: q?.productId
+          }
+        }),
+      get: (id: string) =>
+        $fetch<ApiResult<PurchaseItem>>(`/api/purchases/${id}`, fetchOpts),
+      create: (body: {
+        shopId: string
+        /** App `user`: ignored (self). App `shop_owner`: customer id; omit = self. Staff: required. */
+        userId?: string
+        productId: string
+        quantity: number
+        priceAtPurchase: number
+        totalAmount?: number
+        purchaseDate?: string
+        notes?: string
+      }) =>
+        $fetch<ApiResult<PurchaseItem>>('/api/purchases', {
+          method: 'POST',
+          body,
+          ...fetchOpts
+        }),
+      update: (
+        id: string,
+        body: {
+          shopId?: string
+          userId?: string
+          productId?: string
+          quantity?: number
+          priceAtPurchase?: number
+          totalAmount?: number
+          purchaseDate?: string
+          notes?: string
+        }
+      ) =>
+        $fetch<ApiResult<PurchaseItem>>(`/api/purchases/${id}`, {
+          method: 'PUT',
+          body,
+          ...fetchOpts
+        }),
+      remove: (id: string) =>
+        $fetch<ApiResult<{ deleted: boolean; id: string }>>(
+          `/api/purchases/${id}`,
+          { method: 'DELETE', ...fetchOpts }
+        )
+    },
+    shopLinks: {
+      list: (q?: {
+        page?: number
+        limit?: number
+        shopId?: string
+        userId?: string
+        status?: string
+      }) =>
+        $fetch<ApiResult<Paginated<ShopUserLinkItem>>>('/api/shop-links', {
+          ...fetchOpts,
+          query: {
+            page: q?.page,
+            limit: q?.limit,
+            shopId: q?.shopId,
+            userId: q?.userId,
+            status: q?.status
+          }
+        }),
+      get: (id: string) =>
+        $fetch<ApiResult<ShopUserLinkItem>>(`/api/shop-links/${id}`, fetchOpts),
+      invite: (body: { shopId: string; userId: string } | { shopId: string; userIds: string[] }) =>
+        $fetch<ApiResult<ShopUserInviteResult>>('/api/shop-links', {
+          method: 'POST',
+          body,
+          ...fetchOpts
+        }),
+      respond: (id: string, action: 'accept' | 'decline') =>
+        $fetch<ApiResult<ShopUserLinkItem>>(`/api/shop-links/${id}`, {
+          method: 'PUT',
+          body: { action },
+          ...fetchOpts
+        }),
+      revoke: (id: string) =>
+        $fetch<ApiResult<{ revoked: boolean; id: string; status?: string }>>(
+          `/api/shop-links/${id}`,
           { method: 'DELETE', ...fetchOpts }
         )
     }

@@ -97,6 +97,16 @@ Used only for **`POST /api/auth/login`** and **`POST /api/auth/register`**.
 | GET | `/api/products/:id` | Same as above |
 | PUT | `/api/products/:id` | Same as above |
 | DELETE | `/api/products/:id` | Same as above |
+| GET | `/api/purchases` | JWT, `admin`, `super_admin`, `shop_owner`, or `user` |
+| POST | `/api/purchases` | Same as above |
+| GET | `/api/purchases/:id` | Same as above |
+| PUT | `/api/purchases/:id` | Same as above |
+| DELETE | `/api/purchases/:id` | Same as above (soft delete) |
+| GET | `/api/shop-links` | JWT, `admin`, `super_admin`, `shop_owner`, or `user` (see below) |
+| POST | `/api/shop-links` | JWT, `admin`, `super_admin`, or `shop_owner` (invite) |
+| GET | `/api/shop-links/:id` | Same guard as `GET` list |
+| PUT | `/api/shop-links/:id` | JWT, invited `user` only (accept/decline) |
+| DELETE | `/api/shop-links/:id` | JWT, `admin`, `super_admin`, or owning `shop_owner` (revoke) |
 
 ---
 
@@ -424,6 +434,129 @@ Uniqueness rule: `slug` is unique **within the same shop** (`shopId + slug`).
 **404** — product or category not found  
 **400** — category not in shop, invalid price  
 **403** — not allowed for this shop  
+
+---
+
+## Purchases — `/api/purchases*`
+
+**Auth:** JWT, one of: **`admin`**, **`super_admin`**, **`shop_owner`**, **`user`**
+
+- **`admin` / `super_admin`:** full list and CRUD; optional query filters `shopId`, `userId`, `productId`.
+- **`shop_owner`:** only purchases whose `shopId` is one of their shops; same filters where applicable.
+- **`user`:** only purchases where `userId` is the current user (their own ledger lines). On **create**, body `userId` is **ignored** — the line is always for the logged-in user (customer side of the app).
+- **`shop_owner`:** shop-side app: only rows for shops they own. On **create**, send `userId` of the **customer** (any user in the system). If `userId` is **omitted or empty**, the line is recorded for the **shop owner themselves** (e.g. personal purchase at their own shop).
+
+Same **`POST /api/purchases`** endpoint is used for both app flows; the token’s `role` determines behaviour.
+
+**Soft delete:** `DELETE` sets `deletedAt`; list and `GET` exclude soft-deleted rows.
+
+**Validation:** `productId` must reference a product whose `shopId` matches the purchase `shopId`. `totalAmount` is derived as `quantity × priceAtPurchase` (rounded to two decimals). If the client sends `totalAmount`, it must match within `0.02`.
+
+**Active membership (required for non-staff):** for roles **`user`** and **`shop_owner`**, creating or updating a purchase is allowed only if there is a **shop link** with `status: "active"` for the same `shopId` and the purchase’s `userId` (customer). **`admin` / `super_admin`** are exempt so back-office and migration stay possible. Set up links via `POST /api/shop-links` and user acceptance on `PUT /api/shop-links/:id` (see the Shop–user links section). End users cannot self-subscribe; the shop (or staff) must invite, then the user accepts in the app.
+
+### Fields (Laravel-style aliases)
+
+| Field | Aliases | Required | Notes |
+|-------|---------|----------|-------|
+| `shopId` | `shop_id` | yes (create) | Shop reference |
+| `userId` | `user_id` | required for **admin** / **super_admin** on create | **user:** ignored (always self). **shop_owner:** customer id; omit/empty = self. **staff:** must be set. |
+| `productId` | `product_id` | yes (create) | Must belong to `shopId` |
+| `quantity` | — | yes | Positive number |
+| `priceAtPurchase` | `price_at_purchase` | yes | Non-negative; snapshot at time of purchase |
+| `totalAmount` | `total_amount` | no | Optional check against computed line total |
+| `purchaseDate` | `purchase_date` | no | ISO date string; defaults to now on create |
+| `notes` | — | no | Max length 2000 (server) |
+
+### `GET /api/purchases`
+
+**Query:**
+
+| Param | Aliases | Description |
+|-------|---------|-------------|
+| `page` | — | default `1` |
+| `limit` | — | default `10`, max `100` |
+| `search` | — | optional — matches `notes` (substring, case-insensitive) |
+| `shopId` | `shop_id` | optional filter |
+| `userId` | `user_id` | optional filter (role `user` may only filter self implicitly) |
+| `productId` | `product_id` | optional filter |
+
+**200** — paginated `items`: `id`, `shopId`, `userId`, `productId`, `quantity`, `priceAtPurchase`, `totalAmount`, `purchaseDate`, `notes`, `shopName`, `productName`, `userName`, `userEmail`, `createdAt`, `updatedAt`, `deletedAt` (usually `null` for active rows)
+
+### `POST /api/purchases`
+
+**Body (JSON):** see table above.
+
+**201** — created purchase (same shape as `GET :id`)
+
+### `GET /api/purchases/:id` / `PUT` / `DELETE`
+
+**PUT:** partial update; `totalAmount` is recomputed from `quantity` and `priceAtPurchase` unless validation fails.
+
+**DELETE:** `{ "deleted": true, "id": "..." }` — row remains in DB with `deletedAt` set.
+
+**404** — not found or soft-deleted  
+**403** — not allowed for this row  
+**400** — product not in shop, totals mismatch, invalid numbers, or no active shop–user link (for `user` / `shop_owner`)  
+
+---
+
+## Shop–user links — `/api/shop-links*`
+
+Connects **users** to **shops** for a controlled “collection” on both sides. End users **cannot** browse and subscribe to arbitrary shops; a **shop** (or **staff**) must add the user first (`pending`). The **user** then **accepts** or **declines** in the app. Only **`active`** links count for purchase checks and for “my shops” / “my customers” UIs.
+
+| Status | Meaning |
+|--------|---------|
+| `pending` | Shop (or staff) invited this user; user has not decided. |
+| `active` | User accepted; purchases allowed for this pair. |
+| `declined` | User rejected the invite. Shop may send a new invite (row reset to `pending`). |
+| `revoked` | Shop or staff removed the link (or cancelled an invite). |
+
+**Auth:** JWT with `requireShopLinkModule` — `admin`, `super_admin`, `shop_owner`, or `user` (end user).
+
+### `GET /api/shop-links`
+
+| Caller | Query | Behaviour |
+|--------|-------|-------------|
+| `user` | optional `status`, optional `shopId` | Lists **my** links (`userId` = me). |
+| `shop_owner` | **`shopId` required** | Members / invites for a shop the owner controls. |
+| `admin` / `super_admin` | **`shopId` and/or `userId`** (at least one) | Staff view: all links for a shop, for a user, or both. |
+
+**Pagination:** `page` (default `1`), `limit` (default `20`, max `200`).
+
+**200** — `items` with `id`, `userId`, `shopId`, `status`, `invitedByUserId`, `shopName`, `userName`, `userEmail`, `inviterName`, `createdAt`, `updatedAt`.
+
+### `POST /api/shop-links`
+
+**Who:** `shop_owner` (own shop only) or **staff** (any shop). **Not** the end `user` role.
+
+**Body:** `shopId` (or `shop_id`), and either `userId` (or `user_id`) or `userIds: string[]` for bulk. The shop’s **owner user id** cannot be added as a customer to the same shop.
+
+**201** — `{ "shopId", "invitedByUserId", "results": [ { "userId", "ok", "id"?, "error"? }, ... ] }` (per-user success or error for bulk).
+
+**400** — duplicate pending, already member, etc.
+
+### `PUT /api/shop-links/:id`
+
+**Who:** the **invited user** only (role `user`).
+
+**Body:** `{ "action": "accept" }` or `{ "action": "decline" }` while the link is `pending`.
+
+**200** — updated link (same shape as `GET`).
+
+### `GET /api/shop-links/:id` / `DELETE /api/shop-links/:id`
+
+**GET:** allowed for staff, the linked user, or the shop owner of that `shopId`.
+
+**DELETE (revoke):** **staff** or **shop owner** of that shop. Sets `status` to `revoked` (idempotent if already `revoked` / `declined` with a no-op style response). The **end user** does not delete to leave; they use **decline** on `pending` only (or ask the shop to revoke an `active` link).
+
+### App UX (suggested)
+
+- Poll or pull `GET /api/shop-links?status=pending` as the **user**; show a card per row with **Accept** / **Decline** → `PUT /api/shop-links/:id`.
+- Shop app: `GET /api/shop-links?shopId=...&status=active` for customer pickers; `POST` to invite; `DELETE` to remove.
+
+### Admin website
+
+**Dashboard → Shop links** (`/dashboard/shop-links`): choose shop, search users, bulk invite, list and revoke. Same APIs as the app; staff use a normal web session (cookie).
 
 ---
 

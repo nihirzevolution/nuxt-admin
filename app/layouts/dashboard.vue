@@ -46,6 +46,22 @@
           Products
         </NuxtLink>
         <NuxtLink
+          v-if="isStaff"
+          to="/dashboard/purchases"
+          class="rounded-lg px-3 py-2.5 text-sm font-medium transition"
+          :class="path.startsWith('/dashboard/purchases') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+        >
+          Purchases
+        </NuxtLink>
+        <NuxtLink
+          v-if="isStaff"
+          to="/dashboard/shop-links"
+          class="rounded-lg px-3 py-2.5 text-sm font-medium transition"
+          :class="path.startsWith('/dashboard/shop-links') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+        >
+          Shop links
+        </NuxtLink>
+        <NuxtLink
           v-if="isSuperAdmin"
           to="/dashboard/roles"
           class="rounded-lg px-3 py-2.5 text-sm font-medium transition"
