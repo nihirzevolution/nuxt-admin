@@ -92,6 +92,11 @@ Used only for **`POST /api/auth/login`** and **`POST /api/auth/register`**.
 | GET | `/api/categories/:id` | Same as above |
 | PUT | `/api/categories/:id` | Same as above |
 | DELETE | `/api/categories/:id` | Same as above |
+| GET | `/api/products` | JWT, `admin`, `super_admin`, or `shop_owner` |
+| POST | `/api/products` | JWT, `admin`, `super_admin`, or `shop_owner` |
+| GET | `/api/products/:id` | Same as above |
+| PUT | `/api/products/:id` | Same as above |
+| DELETE | `/api/products/:id` | Same as above |
 
 ---
 
@@ -372,6 +377,53 @@ Uniqueness rule: `slug` is unique **within the same shop** (`shopId + slug`).
 ### `DELETE /api/categories/:id`
 
 **200** — `{ "deleted": true, "id": "..." }`
+
+---
+
+## Products CRUD — `/api/products*`
+
+**Auth:** JWT, one of: **`admin`**, **`super_admin`**, **`shop_owner`**
+
+- **`admin` / `super_admin`:** list all products (optional filters); create/update/delete for any shop they can access.
+- **`shop_owner`:** only products whose `shopId` is one of their shops.
+
+### Fields
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `categoryId` / `category_id` | yes | Must belong to the same shop as `shopId` |
+| `shopId` / `shop_id` | yes | Shop reference |
+| `productImage` / `product_image` | no | Image URL string (no upload in this API) |
+| `name` | yes | Product name |
+| `price` | yes | Non-negative number |
+
+### `GET /api/products`
+
+**Query:**
+
+| Param | Description |
+|-------|-------------|
+| `page` | default `1` |
+| `limit` | default `10`, max `100` |
+| `search` | optional — matches `name` or `productImage` (substring) |
+| `shopId` / `shop_id` | optional filter |
+| `categoryId` / `category_id` | optional filter (if `shopId` is also sent, must match that shop) |
+
+**200** — paginated `items`: `id`, `shopId`, `categoryId`, `name`, `productImage`, `price`, `shopName`, `categoryName`, `ownerName`, `ownerEmail`, `createdAt`, `updatedAt`
+
+### `POST /api/products`
+
+**Body (JSON):** `shopId` (or `shop_id`), `categoryId` (or `category_id`), `name`, `price`; optional `productImage` (or `product_image`).
+
+**201** — created product (same shape as list item)
+
+### `GET /api/products/:id` / `PUT` / `DELETE`
+
+**PUT:** partial update of any of the fields above. If `shopId` changes, the category must still belong to the new shop.
+
+**404** — product or category not found  
+**400** — category not in shop, invalid price  
+**403** — not allowed for this shop  
 
 ---
 

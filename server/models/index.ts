@@ -2,3 +2,4 @@ export { User, type IUser, type IUserDocument, type UserRole } from './user.mode
 export { Role, type IRole, type IRoleDocument } from './role.model'
 export { Shop, type IShop, type IShopDocument } from './shop.model'
 export { Category, type ICategory, type ICategoryDocument } from './category.model'
+export { Product, type IProduct, type IProductDocument } from './product.model'

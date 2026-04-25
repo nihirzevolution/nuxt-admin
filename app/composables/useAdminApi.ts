@@ -58,6 +58,21 @@ export type CategoryItem = {
   updatedAt: string
 }
 
+export type ProductItem = {
+  id: string
+  shopId: string
+  categoryId: string
+  name: string
+  productImage: string
+  price: number
+  shopName?: string
+  categoryName?: string
+  ownerName?: string
+  ownerEmail?: string
+  createdAt: string
+  updatedAt: string
+}
+
 const fetchOpts = { credentials: 'include' as const }
 
 /**
@@ -240,6 +255,59 @@ export function useAdminApi() {
       remove: (id: string) =>
         $fetch<ApiResult<{ deleted: boolean; id: string }>>(
           `/api/categories/${id}`,
+          { method: 'DELETE', ...fetchOpts }
+        )
+    },
+    products: {
+      list: (q?: {
+        page?: number
+        limit?: number
+        search?: string
+        shopId?: string
+        categoryId?: string
+      }) =>
+        $fetch<ApiResult<Paginated<ProductItem>>>('/api/products', {
+          ...fetchOpts,
+          query: {
+            page: q?.page,
+            limit: q?.limit,
+            search: q?.search,
+            shopId: q?.shopId,
+            categoryId: q?.categoryId
+          }
+        }),
+      get: (id: string) =>
+        $fetch<ApiResult<ProductItem>>(`/api/products/${id}`, fetchOpts),
+      create: (body: {
+        shopId: string
+        categoryId: string
+        name: string
+        price: number
+        productImage?: string
+      }) =>
+        $fetch<ApiResult<ProductItem>>('/api/products', {
+          method: 'POST',
+          body,
+          ...fetchOpts
+        }),
+      update: (
+        id: string,
+        body: {
+          shopId?: string
+          categoryId?: string
+          name?: string
+          price?: number
+          productImage?: string
+        }
+      ) =>
+        $fetch<ApiResult<ProductItem>>(`/api/products/${id}`, {
+          method: 'PUT',
+          body,
+          ...fetchOpts
+        }),
+      remove: (id: string) =>
+        $fetch<ApiResult<{ deleted: boolean; id: string }>>(
+          `/api/products/${id}`,
           { method: 'DELETE', ...fetchOpts }
         )
     }
