@@ -104,3 +104,20 @@ export function isStaffRole(role: string) {
 export function isSuperAdminRole(role: string) {
   return role === SUPER_ADMIN
 }
+
+const SHOP_MODULE_ROLES = new Set(['admin', 'super_admin', 'shop_owner'])
+
+/**
+ * Shops API + dashboard: `admin`, `super_admin`, or `shop_owner`.
+ */
+export async function requireShopModule(
+  event: Parameters<typeof getCookie>[0]
+) {
+  const { user, token, payload } = await getAuthUserFromEvent(event)
+  if (!SHOP_MODULE_ROLES.has(String(user.role))) {
+    const e = new Error('Forbidden') as { statusCode?: number }
+    e.statusCode = 403
+    throw e
+  }
+  return { user, token, payload }
+}

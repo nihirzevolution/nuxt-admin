@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import type { RoleItem } from '~/composables/useAdminApi'
 
-definePageMeta({ layout: 'dashboard', middleware: ['auth', 'staff', 'superAdmin'] })
+definePageMeta({ layout: 'dashboard', middleware: ['auth', 'staff', 'super-admin'] })
 
 const adminApi = useAdminApi()
 const items = ref<RoleItem[]>([])

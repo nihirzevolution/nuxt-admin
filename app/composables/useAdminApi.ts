@@ -28,6 +28,23 @@ export type UserItem = {
   updatedAt: string
 }
 
+export type ShopItem = {
+  id: string
+  userId: string
+  ownerName?: string
+  ownerEmail?: string
+  name: string
+  address: string
+  phone: string
+  email: string
+  description: string
+  city: string
+  country: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 const fetchOpts = { credentials: 'include' as const }
 
 /**
@@ -109,9 +126,63 @@ export function useAdminApi() {
           body,
           ...fetchOpts
         }),
-      remove: (id: string) =>
+        remove: (id: string) =>
         $fetch<ApiResult<{ deleted: boolean; id: string }>>(
           `/api/users/${id}`,
+          { method: 'DELETE', ...fetchOpts }
+        )
+    },
+    shops: {
+      list: (q?: { page?: number; limit?: number; search?: string; userId?: string }) =>
+        $fetch<ApiResult<Paginated<ShopItem>>>('/api/shops', {
+          ...fetchOpts,
+          query: {
+            page: q?.page,
+            limit: q?.limit,
+            search: q?.search,
+            userId: q?.userId
+          }
+        }),
+      get: (id: string) =>
+        $fetch<ApiResult<ShopItem>>(`/api/shops/${id}`, fetchOpts),
+      create: (body: {
+        userId?: string
+        name: string
+        address: string
+        phone: string
+        email?: string
+        description?: string
+        city?: string
+        country?: string
+        isActive?: boolean
+      }) =>
+        $fetch<ApiResult<ShopItem>>('/api/shops', {
+          method: 'POST',
+          body,
+          ...fetchOpts
+        }),
+      update: (
+        id: string,
+        body: {
+          userId?: string
+          name?: string
+          address?: string
+          phone?: string
+          email?: string
+          description?: string
+          city?: string
+          country?: string
+          isActive?: boolean
+        }
+      ) =>
+        $fetch<ApiResult<ShopItem>>(`/api/shops/${id}`, {
+          method: 'PUT',
+          body,
+          ...fetchOpts
+        }),
+      remove: (id: string) =>
+        $fetch<ApiResult<{ deleted: boolean; id: string }>>(
+          `/api/shops/${id}`,
           { method: 'DELETE', ...fetchOpts }
         )
     }

@@ -21,7 +21,8 @@ export type MeData = {
 }
 
 export type RegisterData = {
-  token: string
+  /** Present when `X-Auth-Client: app`; web registration does not issue a browser session. */
+  token?: string
   user: { id: string; name: string; email: string; role: string }
   message: string
   downloadUrl: string

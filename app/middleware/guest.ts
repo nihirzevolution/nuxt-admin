@@ -19,10 +19,14 @@ export default defineNuxtRouteMiddleware(async () => {
       if (r === 'admin' || r === 'super_admin') {
         return navigateTo('/dashboard')
       }
-      return navigateTo('/')
+      // App-only account: clear so staff can use this device on /login
+      clearSession()
+      return
     }
   } catch {
-    // stale / invalid token while on guest page
+    // network or invalid — drop cookie so /login is usable
   }
-  clearSession()
+  if (token.value) {
+    clearSession()
+  }
 })

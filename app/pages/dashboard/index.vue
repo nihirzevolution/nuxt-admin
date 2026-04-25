@@ -18,23 +18,29 @@
       class="mt-4 text-slate-500"
     >Use the sidebar: <strong
       class="font-medium text-slate-400"
+    >Shops</strong> to manage store records (web is staff-only; store owners use the app + <code
+        class="text-indigo-400/90"
+    >/api/shops</code> with the app). <strong
+      class="font-medium text-slate-400"
     >Users</strong> is for <code
       class="text-indigo-400/90"
     >admin</code> and
       <code
         class="text-indigo-400/90"
-      >super_admin</code>.
+    >super_admin</code>.
       <strong
         class="font-medium text-slate-400"
-      >Roles</strong> (API
+    >Roles</strong> (API
       <code
         class="text-indigo-400/90"
-      >/api/roles</code>) is <strong
+    >/api/roles</code>) is <strong
         class="text-amber-500/90"
-      >super_admin</strong> only. Users API:
+    >super_admin</strong> only. Users API:
       <code
         class="text-indigo-400/90"
-      >/api/users</code>.
+    >/api/users</code>, shops: <code
+        class="text-indigo-400/90"
+    >/api/shops</code>.
     </p>
   </div>
 </template>
@@ -42,7 +48,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'dashboard',
-  middleware: ['auth', 'staff']
+  middleware: ['auth', 'dashboard-access']
 })
 
 const { user, isStaff } = useAuth()

@@ -22,6 +22,14 @@
           Overview
         </NuxtLink>
         <NuxtLink
+          v-if="canUseShops"
+          to="/dashboard/shops"
+          class="rounded-lg px-3 py-2.5 text-sm font-medium transition"
+          :class="path.startsWith('/dashboard/shops') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+        >
+          Shops
+        </NuxtLink>
+        <NuxtLink
           v-if="isSuperAdmin"
           to="/dashboard/roles"
           class="rounded-lg px-3 py-2.5 text-sm font-medium transition"
@@ -87,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-const { user, clearSession, isStaff, isSuperAdmin } = useAuth()
+const { user, clearSession, isStaff, isSuperAdmin, canUseShops } = useAuth()
 const route = useRoute()
 const path = computed(() => route.path)
 const isDashHome = computed(

@@ -32,8 +32,11 @@ export default defineEventHandler(async (event) => {
     )
   }
 
+  const rawClient = getRequestHeader(event, 'x-auth-client')?.toLowerCase()
+  const client: 'app' | 'web' = rawClient === 'app' ? 'app' : 'web'
+
   try {
-    const data = await registerUser({ name, email, password })
+    const data = await registerUser({ name, email, password }, { client })
     return jsonSuccess(event, data, 201)
   } catch (e: unknown) {
     const err = e as { message?: string; statusCode?: number }

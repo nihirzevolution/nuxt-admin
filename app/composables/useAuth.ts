@@ -36,6 +36,11 @@ export function useAuth() {
 
   const isSuperAdmin = computed(() => user.value?.role === 'super_admin')
 
+  const isShopOwner = computed(() => user.value?.role === 'shop_owner')
+
+  /** Web portal: shops UI (same as staff — only admin / super_admin use the website). */
+  const canUseShops = isStaff
+
   /** @deprecated use isStaff — same (admin or super_admin) */
   const isAdmin = isStaff
 
@@ -44,6 +49,8 @@ export function useAuth() {
     user,
     isStaff,
     isSuperAdmin,
+    isShopOwner,
+    canUseShops,
     isAdmin,
     setSession,
     clearSession

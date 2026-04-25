@@ -2,6 +2,14 @@
   <div
     v-if="!success"
   >
+    <div
+      class="mb-5 rounded-lg border border-amber-500/25 bg-amber-950/30 px-3.5 py-3 text-sm text-amber-100/90"
+    >
+      <p class="font-medium text-amber-200/95">App registration</p>
+      <p class="mt-1 text-xs leading-relaxed text-amber-200/70">
+        This page creates your account in our system. The customer portal is the mobile app — you will not get access to this admin website.
+      </p>
+    </div>
     <form
       class="space-y-5"
       @submit.prevent="onSubmit"
@@ -172,9 +180,11 @@ async function onSubmit() {
       password: form.password
     })
     if (res.ok) {
-      setSession(res.data.token, res.data.user)
+      if (res.data.token) {
+        setSession(res.data.token, res.data.user)
+      }
       successMessage.value = res.data.message
-        || 'Thank you for your registration! You can now use the application.'
+        || 'Thank you! Use the app to sign in.'
       downloadUrl.value = res.data.downloadUrl || '#'
       assignedRole.value = res.data.user.role
       success.value = true

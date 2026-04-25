@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(() => {
   if (!user.value) {
     return
   }
-  if (user.value.role === 'super_admin') {
+  if (user.value?.role === 'super_admin') {
     return
   }
   return navigateTo('/dashboard')
