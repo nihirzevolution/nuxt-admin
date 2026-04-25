@@ -45,6 +45,19 @@ export type ShopItem = {
   updatedAt: string
 }
 
+export type CategoryItem = {
+  id: string
+  name: string
+  slug: string
+  shopId: string
+  shopName?: string
+  ownerName?: string
+  ownerEmail?: string
+  description: string
+  createdAt: string
+  updatedAt: string
+}
+
 const fetchOpts = { credentials: 'include' as const }
 
 /**
@@ -183,6 +196,50 @@ export function useAdminApi() {
       remove: (id: string) =>
         $fetch<ApiResult<{ deleted: boolean; id: string }>>(
           `/api/shops/${id}`,
+          { method: 'DELETE', ...fetchOpts }
+        )
+    },
+    categories: {
+      list: (q?: { page?: number; limit?: number; search?: string; shopId?: string }) =>
+        $fetch<ApiResult<Paginated<CategoryItem>>>('/api/categories', {
+          ...fetchOpts,
+          query: {
+            page: q?.page,
+            limit: q?.limit,
+            search: q?.search,
+            shopId: q?.shopId
+          }
+        }),
+      get: (id: string) =>
+        $fetch<ApiResult<CategoryItem>>(`/api/categories/${id}`, fetchOpts),
+      create: (body: {
+        name: string
+        slug?: string
+        shopId: string
+        description?: string
+      }) =>
+        $fetch<ApiResult<CategoryItem>>('/api/categories', {
+          method: 'POST',
+          body,
+          ...fetchOpts
+        }),
+      update: (
+        id: string,
+        body: {
+          name?: string
+          slug?: string
+          shopId?: string
+          description?: string
+        }
+      ) =>
+        $fetch<ApiResult<CategoryItem>>(`/api/categories/${id}`, {
+          method: 'PUT',
+          body,
+          ...fetchOpts
+        }),
+      remove: (id: string) =>
+        $fetch<ApiResult<{ deleted: boolean; id: string }>>(
+          `/api/categories/${id}`,
           { method: 'DELETE', ...fetchOpts }
         )
     }

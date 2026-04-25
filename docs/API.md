@@ -87,6 +87,11 @@ Used only for **`POST /api/auth/login`** and **`POST /api/auth/register`**.
 | GET | `/api/shops/:id` | Same as above |
 | PUT | `/api/shops/:id` | Same as above |
 | DELETE | `/api/shops/:id` | Same as above |
+| GET | `/api/categories` | JWT, `admin`, `super_admin`, or `shop_owner` |
+| POST | `/api/categories` | JWT, `admin`, `super_admin`, or `shop_owner` |
+| GET | `/api/categories/:id` | Same as above |
+| PUT | `/api/categories/:id` | Same as above |
+| DELETE | `/api/categories/:id` | Same as above |
 
 ---
 
@@ -298,6 +303,75 @@ For `shop_owner`, do not rely on `userId` in body; server sets the owner to the 
 **PUT:** partial updates; staff may change `userId`.  
 
 **404/403** — if shop not found or not allowed for this role  
+
+---
+
+## Category master CRUD — `/api/categories*`
+
+**Auth:** JWT, one of: **`admin`**, **`super_admin`**, **`shop_owner`**
+
+- **`admin` / `super_admin`:** can manage categories for any shop.
+- **`shop_owner`:** can manage categories only for their own shops.
+
+### Fields
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `name` | yes | Display/category name |
+| `slug` | no | Auto-generated from `name` when omitted |
+| `shopId` / `shop_id` | yes | Shop reference (both keys accepted) |
+| `description` | no | Free text |
+
+Uniqueness rule: `slug` is unique **within the same shop** (`shopId + slug`).
+
+### `GET /api/categories`
+
+**Query:**
+
+| Param | Description |
+|-------|-------------|
+| `page` | default `1` |
+| `limit` | default `10`, max `100` |
+| `search` | optional (`name`, `slug`, `description`) |
+| `shopId` / `shop_id` | optional filter (staff: any shop, owner: only own shops) |
+
+**200** — paginated `items`:
+
+- `id`, `name`, `slug`, `shopId`, `shopName`, `ownerName`, `ownerEmail`, `description`, `createdAt`, `updatedAt`
+
+### `POST /api/categories`
+
+**Body (JSON):**
+
+```json
+{
+  "name": "Electronics",
+  "slug": "electronics",
+  "shopId": "SHOP_OBJECT_ID",
+  "description": "All electronic products"
+}
+```
+
+`slug` can be omitted; server generates it from `name`.
+
+**201** — created category item (same shape as list item)
+
+### `GET /api/categories/:id`
+
+**200** — single category item  
+**404** — not found  
+**403** — not allowed for this shop/user  
+
+### `PUT /api/categories/:id`
+
+**Body (JSON):** optional partial update of `name`, `slug`, `shopId`, `description`.
+
+**200** — updated category item  
+**409** — duplicate `slug` in the same `shopId`  
+
+### `DELETE /api/categories/:id`
+
+**200** — `{ "deleted": true, "id": "..." }`
 
 ---
 
